@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RuralCash AI — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16241F;
+    --ink-soft:#4B5A52;
+    --paper:#EEF3EC;
+    --surface:#FFFFFF;
+    --primary:#0F6E52;
+    --primary-dark:#0A4F3B;
+    --primary-tint:#E1F0E9;
+    --secondary:#24507A;
+    --secondary-tint:#E4ECF4;
+    --amber:#C97C1F;
+    --amber-tint:#FBEEDD;
+    --danger:#B23A3A;
+    --danger-tint:#F8E7E5;
+    --line:#DFE6DC;
+    --shadow: 0 8px 24px rgba(22,36,31,0.08);
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, #F6FAF4 0%, #E6EEE2 45%, #DCE6D6 100%);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    color:var(--ink);
+  }
+  .device{
+    width:390px;
+    height:820px;
+    background:#0D1512;
+    border-radius:46px;
+    padding:14px;
+    box-shadow: 0 30px 60px rgba(13,21,18,0.35), 0 2px 0 rgba(255,255,255,0.4) inset;
+    position:relative;
+  }
+  .notch{
+    position:absolute;
+    top:14px; left:50%; transform:translateX(-50%);
+    width:120px; height:26px;
+    background:#0D1512;
+    border-radius:0 0 16px 16px;
+    z-index:50;
+  }
+  .screen-frame{
+    width:100%; height:100%;
+    background:var(--paper);
+    border-radius:32px;
+    overflow:hidden;
+    position:relative;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    background:var(--paper);
+  }
+  .screen.active{display:flex;}
+
+  /* ---- Top bars ---- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 20px 12px;
+    background:var(--paper);
+  }
+  .topbar .greet{font-size:12px; color:var(--ink-soft); font-weight:500;}
+  .topbar h1{font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:600; margin-top:2px;}
+  .icon-btn{
+    width:38px; height:38px; border-radius:12px;
+    background:var(--surface); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; position:relative;
+    font-size:16px;
+  }
+  .icon-btn .dot{position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--danger); border:1.5px solid var(--surface);}
+  .back-row{display:flex; align-items:center; gap:12px; padding:18px 20px 8px;}
+  .back-row h2{font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600;}
+
+  .content{flex:1; overflow-y:auto; padding:4px 20px 100px; scrollbar-width:none;}
+  .content::-webkit-scrollbar{display:none;}
+
+  /* ---- Bottom nav ---- */
+  .bottomnav{
+    position:absolute; bottom:0; left:0; right:0;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-around; align-items:center;
+    padding:10px 8px 14px;
+    z-index:40;
+  }
+  .navitem{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--ink-soft); font-size:10px; font-weight:600;
+    cursor:pointer; width:60px;
+  }
+  .navitem .ico{font-size:18px;}
+  .navitem.active{color:var(--primary);}
+  .fab{
+    position:absolute; right:20px; bottom:88px;
+    width:56px; height:56px; border-radius:18px;
+    background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; box-shadow: 0 10px 20px rgba(15,110,82,0.35);
+    cursor:pointer; z-index:41; border:none;
+  }
+
+  /* ---- Cards ---- */
+  .card{
+    background:var(--surface);
+    border-radius:var(--radius-lg);
+    border:1px solid var(--line);
+    padding:18px;
+    margin-bottom:14px;
+    box-shadow: var(--shadow);
+  }
+  .card-flat{background:var(--surface); border-radius:var(--radius-md); border:1px solid var(--line); padding:14px;}
+  .label-eyebrow{font-size:11px; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-soft); font-weight:600;}
+  .big-num{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:30px; letter-spacing:-0.01em;}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;
+  }
+  .pill.green{background:var(--primary-tint); color:var(--primary-dark);}
+  .pill.amber{background:var(--amber-tint); color:var(--amber);}
+  .pill.red{background:var(--danger-tint); color:var(--danger);}
+  .pill.blue{background:var(--secondary-tint); color:var(--secondary);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .stat-mini{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px;}
+  .stat-mini .v{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px; margin-top:4px;}
+  .row{display:flex; align-items:center; justify-content:space-between;}
+
+  h3.section-title{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:18px 0 10px;}
+  h3.section-title:first-child{margin-top:4px;}
+
+  /* Quick actions */
+  .quick-actions{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:6px;}
+  .qa{display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;}
+  .qa .circ{width:48px; height:48px; border-radius:16px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:19px;}
+  .qa span{font-size:10px; font-weight:600; text-align:center; color:var(--ink-soft);}
+
+  /* Gauge */
+  .gauge-wrap{display:flex; align-items:center; gap:16px;}
+  .gauge-text .n{font-family:'Space Grotesk',sans-serif; font-size:26px; font-weight:700;}
+
+  /* buttons */
+  .btn{
+    width:100%; padding:14px; border-radius:14px; border:none;
+    font-weight:700; font-size:14px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .btn-primary{background:var(--primary); color:#fff;}
+  .btn-outline{background:var(--surface); color:var(--ink); border:1px solid var(--line);}
+  .toggle-group{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:4px; margin-bottom:16px;}
+  .toggle-opt{flex:1; text-align:center; padding:10px; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; color:var(--ink-soft);}
+  .toggle-opt.on-income{background:var(--primary-tint); color:var(--primary-dark);}
+  .toggle-opt.on-expense{background:var(--danger-tint); color:var(--danger);}
+
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line);
+    background:var(--surface); font-family:'Inter',sans-serif; font-size:14px; color:var(--ink);
+  }
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{padding:8px 13px; border-radius:20px; border:1px solid var(--line); background:var(--surface); font-size:12px; font-weight:600; cursor:pointer; color:var(--ink-soft);}
+  .chip.sel{background:var(--primary); color:#fff; border-color:var(--primary);}
+
+  .tx-item{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .tx-item:last-child{border-bottom:none;}
+  .tx-ico{width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+  .tx-ico.in{background:var(--primary-tint);}
+  .tx-ico.out{background:var(--danger-tint);}
+  .tx-meta{flex:1; min-width:0;}
+  .tx-meta .t{font-weight:600; font-size:13.5px;}
+  .tx-meta .s{font-size:11.5px; color:var(--ink-soft);}
+  .tx-amt{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px;}
+  .tx-amt.in{color:var(--primary-dark);}
+  .tx-amt.out{color:var(--danger);}
+
+  /* calendar */
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:10px;}
+  .cal-day{aspect-ratio:1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:pointer; color:#fff; position:relative;}
+  .cal-day.g{background:#3FA383;}
+  .cal-day.a{background:#E0A24C;}
+  .cal-day.r{background:#C5615C;}
+  .cal-day.empty{background:transparent;}
+  .cal-legend{display:flex; gap:14px; margin-top:12px; font-size:11px; color:var(--ink-soft); font-weight:600;}
+  .cal-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .sw{width:9px; height:9px; border-radius:3px; display:inline-block;}
+
+  .rec-item{display:flex; gap:12px; padding:14px 0; border-bottom:1px solid var(--line);}
+  .rec-item:last-child{border-bottom:none;}
+  .rec-num{width:26px; height:26px; border-radius:8px; background:var(--primary-tint); color:var(--primary-dark); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;}
+  .rec-body .t{font-weight:600; font-size:13.5px; margin-bottom:3px;}
+  .rec-body .d{font-size:11.5px; color:var(--ink-soft); line-height:1.5;}
+  .rec-tags{display:flex; gap:6px; margin-top:6px;}
+
+  .alert-item{display:flex; gap:12px; padding:14px; border-radius:14px; margin-bottom:10px; border:1px solid var(--line);}
+  .alert-item.red{background:var(--danger-tint); border-color:#EAC3C0;}
+  .alert-item.amber{background:var(--amber-tint); border-color:#EFD5AE;}
+  .alert-item.blue{background:var(--secondary-tint); border-color:#C9D8E7;}
+  .alert-ico{font-size:18px;}
+  .alert-t{font-weight:700; font-size:13px;}
+  .alert-d{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .alert-time{font-size:10px; color:var(--ink-soft); margin-top:5px;}
+
+  /* login/splash */
+  .splash{align-items:center; justify-content:center; text-align:center; background:linear-gradient(160deg,var(--primary-dark),var(--primary) 60%, #1D8C68); color:#fff;}
+  .splash .logo{width:84px; height:84px; border-radius:24px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:38px; margin:0 auto 22px; border:1px solid rgba(255,255,255,0.3);}
+  .splash h1{font-family:'Space Grotesk',sans-serif; font-size:26px; font-weight:700;}
+  .splash p{font-size:13px; opacity:0.85; margin-top:8px;}
+  .splash .loadbar{width:140px; height:4px; background:rgba(255,255,255,0.25); border-radius:4px; margin:34px auto 0; overflow:hidden;}
+  .splash .loadbar i{display:block; width:40%; height:100%; background:#fff; border-radius:4px; animation:load 1.6s ease-in-out infinite;}
+  @keyframes load{0%{transform:translateX(-100%);}100%{transform:translateX(350%);}}
+
+  .lang-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+  .lang-chip{padding:9px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface); font-size:12px; font-weight:700; cursor:pointer;}
+  .lang-chip.sel{background:var(--secondary); border-color:var(--secondary); color:#fff;}
+  .otp-row{display:flex; gap:8px; margin:16px 0;}
+  .otp-box{width:42px; height:50px; border-radius:12px; border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px;}
+
+  .ai-banner{
+    background:linear-gradient(120deg, var(--primary-dark), var(--primary));
+    color:#fff; border-radius:var(--radius-lg); padding:18px; margin-bottom:14px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .ai-banner .ico{font-size:20px;}
+  .ai-banner .t{font-weight:700; font-size:13.5px; margin-bottom:4px;}
+  .ai-banner .d{font-size:11.5px; opacity:0.9; line-height:1.5;}
+
+  .switch-row{display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--line);}
+  .switch-row:last-child{border-bottom:none;}
+  .switch{width:42px; height:24px; border-radius:20px; background:var(--line); position:relative; cursor:pointer; flex-shrink:0;}
+  .switch.on{background:var(--primary);}
+  .switch i{position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; transition:0.2s;}
+  .switch.on i{left:20px;}
+
+  .avatar{width:56px; height:56px; border-radius:18px; background:var(--secondary-tint); color:var(--secondary); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; font-family:'Space Grotesk',sans-serif;}
+
+  .link-row{display:flex; align-items:center; justify-content:space-between; padding:15px 4px; border-bottom:1px solid var(--line); cursor:pointer;}
+  .link-row:last-child{border-bottom:none;}
+  .link-row .l{display:flex; align-items:center; gap:12px; font-weight:600; font-size:13.5px;}
+  .link-row .ico{font-size:17px; width:22px; text-align:center;}
+  .chev{color:var(--ink-soft); font-size:14px;}
+
+  ::selection{background:var(--primary-tint);}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="notch"></div>
+  <div class="screen-frame">
+
+    <!-- SCREEN: SPLASH -->
+    <div class="screen active splash" id="splash">
+      <div>
+        <div class="logo">🌱</div>
+        <h1>RuralCash AI</h1>
+        <p>Smart Financial Insights<br>for Rural Businesses</p>
+        <div class="loadbar"><i></i></div>
+      </div>
+    </div>
+
+    <!-- SCREEN: LOGIN -->
+    <div class="screen" id="login">
+      <div class="content" style="padding-top:40px;">
+        <h3 class="label-eyebrow">Choose language / மொழி / భాష / भाषा</h3>
+        <div class="lang-row">
+          <div class="lang-chip sel" onclick="selLang(this)">English</div>
+          <div class="lang-chip" onclick="selLang(this)">தமிழ்</div>
+          <div class="lang-chip" onclick="selLang(this)">తెలుగు</div>
+          <div class="lang-chip" onclick="selLang(this)">हिन्दी</div>
+        </div>
+
+        <h2 style="font-family:'Space Grotesk',sans-serif; font-size:22px; margin-bottom:6px;">Welcome back</h2>
+        <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:22px;">Log in with your mobile number to see today's cash position.</p>
+
+        <div class="field">
+          <label>Mobile number</label>
+          <input type="tel" placeholder="+91 98765 43210" value="+91 98765 43210">
+        </div>
+        <button class="btn btn-primary" onclick="showOtp()">Send OTP</button>
+
+        <div id="otpSection" style="display:none; margin-top:20px;">
+          <label style="font-size:12px; font-weight:600; color:var(--ink-soft);">Enter 4-digit OTP sent to your number</label>
+          <div class="otp-row">
+            <div class="otp-box">4</div><div class="otp-box">2</div><div class="otp-box">1</div><div class="otp-box">7</div>
+          </div>
+          <button class="btn btn-primary" onclick="showScreen('home')">Verify &amp; continue</button>
+        </div>
+
+        <div class="row" style="margin-top:18px;">
+          <label style="font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;"><input type="checkbox" checked style="width:14px;height:14px;"> Remember me</label>
+          <span style="font-size:12px; font-weight:700; color:var(--secondary); cursor:pointer;" onclick="showScreen('home')">New here? Register</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: HOME -->
+    <div class="screen" id="home">
+      <div class="topbar">
+        <div>
+          <div class="greet">Good morning, Lakshmi</div>
+          <h1>Meenakshi Tailoring</h1>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div class="icon-btn" onclick="showScreen('alerts')">🔔<span class="dot"></span></div>
+          <div class="icon-btn" onclick="showScreen('profile')">👤</div>
+        </div>
+      </div>
+      <div class="content">
+
+        <div class="card" style="background:linear-gradient(135deg,var(--primary-dark),var(--primary)); border:none; color:#fff;">
+          <div class="label-eyebrow" style="color:rgba(255,255,255,0.75);">Current cash balance</div>
+          <div class="big-num" style="font-size:32px;">₹ 48,260</div>
+          <div class="row" style="margin-top:14px;">
+            <div>
+              <div style="font-size:11px; opacity:0.75;">Today's income</div>
+              <div style="font-weight:700; font-size:14px;">+ ₹3,200</div>
+            </div>
+            <div>
+              <div style="font-size:11px; opacity:0.75;">Today's expense</div>
+              <div style="font-weight:700; font-size:14px;">− ₹1,150</div>
+            </div>
+            <span class="pill green" style="background:rgba(255,255,255,0.2); color:#fff;">● Low risk</span>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-bottom:14px;">
+          <div class="stat-mini">
+            <div class="label-eyebrow">Weekly</div>
+            <div class="v" style="color:var(--primary-dark);">+₹9,840</div>
+            <div style="font-size:11px; color:var(--ink-soft);">income</div>
+          </div>
+          <div class="stat-mini">
+            <div class="label-eyebrow">Weekly</div>
+            <div class="v" style="color:var(--danger);">−₹6,120</div>
+            <div style="font-size:11px; color:var(--ink-soft);">expense</div>
+          </div>
+          <div class="stat-mini">
+            <div class="label-eyebrow">Monthly</div>
+            <div class="v" style="color:var(--primary-dark);">+₹41,300</div>
+            <div style="font-size:11px; color:var(--ink-soft);">income</div>
+          </div>
+          <div class="stat-mini">
+            <div class="label-eyebrow">Net profit</div>
+            <div class="v">₹15,760</div>
+            <div style="font-size:11px; color:var(--ink-soft);">this month</div>
+          </div>
+        </div>
+
+        <div class="card" onclick="showScreen('risk')" style="cursor:pointer;">
+          <div class="row">
+            <div class="label-eyebrow">AI Risk Score</div>
+            <span class="pill green">Low risk</span>
+          </div>
+          <div class="gauge-wrap" style="margin-top:10px;">
+            <svg width="76" height="76" viewBox="0 0 76 76">
+              <circle cx="38" cy="38" r="32" fill="none" stroke="#E1E7DE" stroke-width="9"/>
+              <circle cx="38" cy="38" r="32" fill="none" stroke="#0F6E52" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="201" stroke-dashoffset="60" transform="rotate(-90 38 38)"/>
+              <text x="38" y="43" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="18" fill="#16241F">70%</text>
+            </svg>
+            <div class="gauge-text">
+              <div style="font-size:12px; color:var(--ink-soft); line-height:1.5;">Healthy reserves and steady sales this week. Tap for full breakdown →</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-title">Quick actions</h3>
+        <div class="quick-actions">
+          <div class="qa" onclick="showScreen('addtx'); setTxType('in')"><div class="circ">＋</div><span>Add income</span></div>
+          <div class="qa" onclick="showScreen('addtx'); setTxType('out')"><div class="circ">－</div><span>Add expense</span></div>
+          <div class="qa" onclick="showScreen('forecast')"><div class="circ">📈</div><span>Predictions</span></div>
+          <div class="qa" onclick="showScreen('reports')"><div class="circ">📄</div><span>Reports</span></div>
+        </div>
+
+        <div class="ai-banner">
+          <div class="ico">✨</div>
+          <div>
+            <div class="t">AI summary</div>
+            <div class="d">Your business is currently stable. Sales are 12% above your 4-week average and expenses are under control.</div>
+          </div>
+        </div>
+
+        <h3 class="section-title">7-day forecast</h3>
+        <div class="card-flat" onclick="showScreen('forecast')" style="cursor:pointer;">
+          <svg width="100%" height="70" viewBox="0 0 320 70" preserveAspectRatio="none">
+            <polyline points="0,50 45,42 90,46 135,30 180,34 225,20 270,24 320,12" fill="none" stroke="#0F6E52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,50 45,42 90,46 135,30 180,34 225,20 270,24 320,12 320,70 0,70" fill="#0F6E52" opacity="0.08" stroke="none"/>
+          </svg>
+          <div class="row" style="margin-top:6px;">
+            <span style="font-size:11px; color:var(--ink-soft);">Expected balance in 7 days</span>
+            <span style="font-weight:700; font-size:13px; color:var(--primary-dark);">₹56,900</span>
+          </div>
+        </div>
+
+        <h3 class="section-title">Cash flow calendar</h3>
+        <div class="card-flat" onclick="showScreen('calendar')" style="cursor:pointer;">
+          <div class="cal-grid" style="margin-top:0;">
+            <div class="cal-day g">1</div><div class="cal-day g">2</div><div class="cal-day a">3</div><div class="cal-day g">4</div><div class="cal-day g">5</div><div class="cal-day r">6</div><div class="cal-day a">7</div>
+          </div>
+          <div style="font-size:11px; color:var(--ink-soft); margin-top:10px;">Tap to see full 30-day predictive calendar →</div>
+        </div>
+
+        <h3 class="section-title">Smart recommendations</h3>
+        <div class="card-flat" onclick="showScreen('recommend')" style="cursor:pointer;">
+          <div class="row"><span style="font-weight:600; font-size:13px;">Reduce inventory purchases by 10%</span><span class="pill amber">High</span></div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:8px;">3 more suggestions waiting →</div>
+        </div>
+
+      </div>
+      <button class="fab" onclick="showScreen('addtx')">＋</button>
+      <div class="bottomnav">
+        <div class="navitem active" onclick="showScreen('home')"><div class="ico">🏠</div>Home</div>
+        <div class="navitem" onclick="showScreen('forecast')"><div class="ico">📈</div>Forecast</div>
+        <div class="navitem" onclick="showScreen('calendar')"><div class="ico">🗓️</div>Calendar</div>
+        <div class="navitem" onclick="showScreen('reports')"><div class="ico">📄</div>Reports</div>
+        <div class="navitem" onclick="showScreen('profile')"><div class="ico">👤</div>Profile</div>
+      </div>
+    </div>
+
+    <!-- SCREEN: ADD TRANSACTION -->
+    <div class="screen" id="addtx">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Add transaction</h2></div>
+      <div class="content">
+        <div class="toggle-group">
+          <div class="toggle-opt on-income" id="toggleIncome" onclick="setTxType('in')">Income</div>
+          <div class="toggle-opt" id="toggleExpense" onclick="setTxType('out')">Expense</div>
+        </div>
+        <div class="field">
+          <label>Amount (₹)</label>
+          <input type="number" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <div class="chip-row" id="catRow">
+            <div class="chip sel">Sales</div><div class="chip">Inventory</div><div class="chip">Loan / EMI</div>
+            <div class="chip">Transport</div><div class="chip">Salary</div><div class="chip">Utilities</div>
+            <div class="chip">Groceries</div><div class="chip">Business expense</div><div class="chip">Miscellaneous</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea rows="2" placeholder="e.g. Saree stitching order — Mrs. Devi"></textarea>
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input type="date" value="2026-07-20">
+        </div>
+        <button class="btn btn-primary" onclick="showScreen('home')">Save transaction</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: TRANSACTION HISTORY -->
+    <div class="screen" id="history">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Transaction history</h2></div>
+      <div class="content">
+        <div class="field" style="margin-bottom:10px;">
+          <input type="text" placeholder="Search transactions">
+        </div>
+        <div class="chip-row" style="margin-bottom:16px;">
+          <div class="chip sel">All</div><div class="chip">Income</div><div class="chip">Expense</div><div class="chip">This week</div><div class="chip">This month</div>
+        </div>
+        <div class="card">
+          <div class="tx-item"><div class="tx-ico in">🧵</div><div class="tx-meta"><div class="t">Saree stitching order</div><div class="s">Sales · Today, 10:20 AM</div></div><div class="tx-amt in">+₹1,200</div></div>
+          <div class="tx-item"><div class="tx-ico out">🧶</div><div class="tx-meta"><div class="t">Fabric purchase</div><div class="s">Inventory · Today, 9:05 AM</div></div><div class="tx-amt out">−₹850</div></div>
+          <div class="tx-item"><div class="tx-ico in">👗</div><div class="tx-meta"><div class="t">Blouse order — 4 pcs</div><div class="s">Sales · Yesterday</div></div><div class="tx-amt in">+₹2,000</div></div>
+          <div class="tx-item"><div class="tx-ico out">🚌</div><div class="tx-meta"><div class="t">Delivery transport</div><div class="s">Transport · Yesterday</div></div><div class="tx-amt out">−₹150</div></div>
+          <div class="tx-item"><div class="tx-ico out">🏦</div><div class="tx-meta"><div class="t">Sewing machine EMI</div><div class="s">Loan · 2 days ago</div></div><div class="tx-amt out">−₹1,800</div></div>
+          <div class="tx-item"><div class="tx-ico in">🧵</div><div class="tx-meta"><div class="t">Uniform bulk order</div><div class="s">Sales · 3 days ago</div></div><div class="tx-amt in">+₹6,500</div></div>
+          <div class="tx-item"><div class="tx-ico out">💡</div><div class="tx-meta"><div class="t">Electricity bill</div><div class="s">Utilities · 4 days ago</div></div><div class="tx-amt out">−₹620</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: FORECAST -->
+    <div class="screen" id="forecast">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Cash flow forecast</h2></div>
+      <div class="content">
+        <div class="toggle-group">
+          <div class="toggle-opt on-income" style="background:var(--primary-tint); color:var(--primary-dark);">7 days</div>
+          <div class="toggle-opt">30 days</div>
+        </div>
+
+        <div class="card">
+          <div class="label-eyebrow">Expected balance, day 7</div>
+          <div class="big-num">₹56,900</div>
+          <svg width="100%" height="110" viewBox="0 0 320 110" preserveAspectRatio="none" style="margin-top:10px;">
+            <polyline points="0,80 45,65 90,72 135,42 180,50 225,25 270,32 320,10" fill="none" stroke="#0F6E52" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,80 45,65 90,72 135,42 180,50 225,25 270,32 320,10 320,110 0,110" fill="#0F6E52" opacity="0.1" stroke="none"/>
+            <polyline points="0,80 45,65 90,72 135,42 180,50 225,25 270,32 320,10" fill="none" stroke="none"/>
+            <g fill="#0F6E52"><circle cx="0" cy="80" r="3"/><circle cx="135" cy="42" r="3"/><circle cx="320" cy="10" r="3"/></g>
+          </svg>
+          <div class="row" style="font-size:10.5px; color:var(--ink-soft); margin-top:2px;"><span>Today</span><span>Day 4</span><span>Day 7</span></div>
+        </div>
+
+        <div class="grid2">
+          <div class="stat-mini"><div class="label-eyebrow">Expected income</div><div class="v" style="color:var(--primary-dark);">₹22,400</div></div>
+          <div class="stat-mini"><div class="label-eyebrow">Expected expense</div><div class="v" style="color:var(--danger);">₹13,760</div></div>
+        </div>
+
+        <div class="ai-banner" style="margin-top:14px;">
+          <div class="ico">⚠️</div>
+          <div>
+            <div class="t">AI explanation</div>
+            <div class="d">A small dip is predicted around day 5, driven by higher inventory spending ahead of the wedding season order.</div>
+          </div>
+        </div>
+
+        <h3 class="section-title">Area view</h3>
+        <div class="card-flat">
+          <svg width="100%" height="90" viewBox="0 0 320 90" preserveAspectRatio="none">
+            <polyline points="0,70 40,55 80,60 120,35 160,45 200,20 240,30 280,15 320,25" fill="none" stroke="#24507A" stroke-width="2.5"/>
+            <polygon points="0,70 40,55 80,60 120,35 160,45 200,20 240,30 280,15 320,25 320,90 0,90" fill="#24507A" opacity="0.12"/>
+          </svg>
+          <div style="font-size:11px; color:var(--ink-soft); margin-top:6px;">Projected income vs. expense band, next 7 days</div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="showScreen('home')"><div class="ico">🏠</div>Home</div>
+        <div class="navitem active" onclick="showScreen('forecast')"><div class="ico">📈</div>Forecast</div>
+        <div class="navitem" onclick="showScreen('calendar')"><div class="ico">🗓️</div>Calendar</div>
+        <div class="navitem" onclick="showScreen('reports')"><div class="ico">📄</div>Reports</div>
+        <div class="navitem" onclick="showScreen('profile')"><div class="ico">👤</div>Profile</div>
+      </div>
+    </div>
+
+    <!-- SCREEN: CALENDAR -->
+    <div class="screen" id="calendar">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Cash flow calendar</h2></div>
+      <div class="content">
+        <p style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">Next 30 days, colour-coded by predicted risk. Tap any day for details.</p>
+        <div class="card">
+          <div class="row" style="font-size:11px; color:var(--ink-soft); font-weight:700; margin-bottom:6px;">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="cal-grid" id="fullCal"></div>
+          <div class="cal-legend">
+            <span><i class="sw" style="background:#3FA383;"></i>Healthy</span>
+            <span><i class="sw" style="background:#E0A24C;"></i>Moderate</span>
+            <span><i class="sw" style="background:#C5615C;"></i>High risk</span>
+          </div>
+        </div>
+
+        <div class="card" id="dayDetail">
+          <div class="label-eyebrow">Selected day — 24 July</div>
+          <div class="row" style="margin-top:8px;">
+            <div><div style="font-size:11px; color:var(--ink-soft);">Predicted balance</div><div style="font-weight:700; font-family:'Space Grotesk',sans-serif;">₹38,900</div></div>
+            <span class="pill amber">Risk score 54%</span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft); margin-top:12px; line-height:1.6;"><b>Reason:</b> EMI due combined with lower seasonal footfall typical for late July.</div>
+          <div style="font-size:12px; color:var(--primary-dark); margin-top:8px; line-height:1.6; font-weight:600;"><b>Suggested action:</b> Collect pending payments from 2 customers before this date.</div>
+        </div>
+
+        <div class="grid2">
+          <div class="stat-mini"><div class="label-eyebrow">Green days</div><div class="v" style="color:var(--primary-dark);">19</div></div>
+          <div class="stat-mini"><div class="label-eyebrow">Amber days</div><div class="v" style="color:var(--amber);">8</div></div>
+          <div class="stat-mini"><div class="label-eyebrow">Red days</div><div class="v" style="color:var(--danger);">3</div></div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="showScreen('home')"><div class="ico">🏠</div>Home</div>
+        <div class="navitem" onclick="showScreen('forecast')"><div class="ico">📈</div>Forecast</div>
+        <div class="navitem active" onclick="showScreen('calendar')"><div class="ico">🗓️</div>Calendar</div>
+        <div class="navitem" onclick="showScreen('reports')"><div class="ico">📄</div>Reports</div>
+        <div class="navitem" onclick="showScreen('profile')"><div class="ico">👤</div>Profile</div>
+      </div>
+    </div>
+
+    <!-- SCREEN: RISK ANALYSIS -->
+    <div class="screen" id="risk">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Risk analysis</h2></div>
+      <div class="content">
+        <div class="card" style="text-align:center;">
+          <svg width="140" height="140" viewBox="0 0 140 140" style="margin:6px auto;">
+            <circle cx="70" cy="70" r="58" fill="none" stroke="#E1E7DE" stroke-width="14"/>
+            <circle cx="70" cy="70" r="58" fill="none" stroke="#0F6E52" stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="364" stroke-dashoffset="109" transform="rotate(-90 70 70)"/>
+            <text x="70" y="65" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="30" fill="#16241F">70%</text>
+            <text x="70" y="86" text-anchor="middle" font-family="Inter" font-weight="600" font-size="11" fill="#4B5A52">Financial health</text>
+          </svg>
+          <span class="pill green">Low risk</span>
+        </div>
+
+        <h3 class="section-title">Risk contributors</h3>
+        <div class="card-flat">
+          <div class="row" style="margin-bottom:10px;"><span style="font-size:13px; font-weight:600;">Low sales</span><span style="font-size:12px; color:var(--ink-soft);">12%</span></div>
+          <div class="row" style="margin-bottom:10px;"><span style="font-size:13px; font-weight:600;">High expenses</span><span style="font-size:12px; color:var(--ink-soft);">18%</span></div>
+          <div class="row" style="margin-bottom:10px;"><span style="font-size:13px; font-weight:600;">Loan burden</span><span style="font-size:12px; color:var(--ink-soft);">41%</span></div>
+          <div class="row"><span style="font-size:13px; font-weight:600;">Seasonal variation</span><span style="font-size:12px; color:var(--ink-soft);">29%</span></div>
+        </div>
+
+        <h3 class="section-title">Risk trend, 8 weeks</h3>
+        <div class="card-flat">
+          <svg width="100%" height="80" viewBox="0 0 320 80" preserveAspectRatio="none">
+            <polyline points="0,30 45,20 90,35 135,45 180,38 225,55 270,48 320,25" fill="none" stroke="#C97C1F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="ai-banner" style="margin-top:14px;">
+          <div class="ico">🧠</div>
+          <div>
+            <div class="t">AI explanation</div>
+            <div class="d">Loan repayment is your biggest exposure this month. Sales are healthy, so timing your EMI around your best collection days will keep risk low.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: RECOMMENDATIONS -->
+    <div class="screen" id="recommend">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>AI recommendations</h2></div>
+      <div class="content">
+        <div class="card">
+          <div class="rec-item">
+            <div class="rec-num">1</div>
+            <div class="rec-body">
+              <div class="t">Reduce inventory purchases by 10%</div>
+              <div class="d">Fabric stock is 22% above your usual turnover rate for this month.</div>
+              <div class="rec-tags"><span class="pill amber">High priority</span><span class="pill green">Saves ~₹2,100</span></div>
+            </div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">2</div>
+            <div class="rec-body">
+              <div class="t">Increase weekly sales target by 8%</div>
+              <div class="d">You're on track to beat last month — a small push keeps the buffer growing.</div>
+              <div class="rec-tags"><span class="pill blue">Medium priority</span><span class="pill green">+₹3,000 buffer</span></div>
+            </div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">3</div>
+            <div class="rec-body">
+              <div class="t">Delay non-essential expenses until day 10</div>
+              <div class="d">Utility and misc. spending can wait until after your EMI clears.</div>
+              <div class="rec-tags"><span class="pill blue">Medium priority</span></div>
+            </div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">4</div>
+            <div class="rec-body">
+              <div class="t">Set aside ₹1,800 ahead of your sewing machine EMI</div>
+              <div class="d">Due on the 24th — keeping cash ready avoids a late fee.</div>
+              <div class="rec-tags"><span class="pill red">Urgent</span></div>
+            </div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">5</div>
+            <div class="rec-body">
+              <div class="t">Build cash reserves toward one month of expenses</div>
+              <div class="d">You're at 65% of that goal — steady progress from this week's sales gets you there.</div>
+              <div class="rec-tags"><span class="pill green">Low priority</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: ALERTS -->
+    <div class="screen" id="alerts">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Alerts &amp; notifications</h2></div>
+      <div class="content">
+        <div class="alert-item red">
+          <div class="alert-ico">🚨</div>
+          <div><div class="alert-t">Loan due reminder</div><div class="alert-d">Sewing machine EMI of ₹1,800 is due in 4 days.</div><div class="alert-time">2 hours ago</div></div>
+        </div>
+        <div class="alert-item amber">
+          <div class="alert-ico">⚠️</div>
+          <div><div class="alert-t">Expense spike detected</div><div class="alert-d">Inventory spending is 22% higher than your monthly average.</div><div class="alert-time">Yesterday</div></div>
+        </div>
+        <div class="alert-item blue">
+          <div class="alert-ico">📊</div>
+          <div><div class="alert-t">Forecast updated</div><div class="alert-d">Your 30-day forecast changed after 3 new transactions.</div><div class="alert-time">Yesterday</div></div>
+        </div>
+        <div class="alert-item amber">
+          <div class="alert-ico">💧</div>
+          <div><div class="alert-t">Cash shortage warning</div><div class="alert-d">Balance may dip below ₹10,000 around 24 July unless collections improve.</div><div class="alert-time">2 days ago</div></div>
+        </div>
+        <div class="alert-item blue">
+          <div class="alert-ico">🛡️</div>
+          <div><div class="alert-t">Risk level stable</div><div class="alert-d">Your risk score has stayed in the "Low" band for 3 weeks straight.</div><div class="alert-time">3 days ago</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: REPORTS -->
+    <div class="screen" id="reports">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Reports &amp; analytics</h2></div>
+      <div class="content">
+        <div class="chip-row" style="margin-bottom:16px;">
+          <div class="chip sel">Monthly</div><div class="chip">Quarterly</div><div class="chip">Annual</div>
+        </div>
+
+        <h3 class="section-title">Income trend</h3>
+        <div class="card-flat">
+          <svg width="100%" height="70" viewBox="0 0 320 70" preserveAspectRatio="none">
+            <polyline points="0,50 55,40 110,44 165,25 220,30 275,15 320,20" fill="none" stroke="#0F6E52" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <h3 class="section-title">Expense trend</h3>
+        <div class="card-flat">
+          <svg width="100%" height="70" viewBox="0 0 320 70" preserveAspectRatio="none">
+            <polyline points="0,30 55,35 110,25 165,42 220,38 275,50 320,45" fill="none" stroke="#B23A3A" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <h3 class="section-title">Profit trend</h3>
+        <div class="card-flat">
+          <svg width="100%" height="70" viewBox="0 0 320 70" preserveAspectRatio="none">
+            <polyline points="0,55 55,45 110,50 165,20 220,28 275,12 320,18" fill="none" stroke="#24507A" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <h3 class="section-title">Risk trend</h3>
+        <div class="card-flat">
+          <svg width="100%" height="70" viewBox="0 0 320 70" preserveAspectRatio="none">
+            <polyline points="0,20 55,28 110,18 165,32 220,25 275,40 320,22" fill="none" stroke="#C97C1F" stroke-width="2.5"/>
+          </svg>
+        </div>
+
+        <h3 class="section-title">Export</h3>
+        <div class="grid2">
+          <button class="btn btn-outline">⬇ PDF report</button>
+          <button class="btn btn-outline">⬇ Excel report</button>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="showScreen('home')"><div class="ico">🏠</div>Home</div>
+        <div class="navitem" onclick="showScreen('forecast')"><div class="ico">📈</div>Forecast</div>
+        <div class="navitem" onclick="showScreen('calendar')"><div class="ico">🗓️</div>Calendar</div>
+        <div class="navitem active" onclick="showScreen('reports')"><div class="ico">📄</div>Reports</div>
+        <div class="navitem" onclick="showScreen('profile')"><div class="ico">👤</div>Profile</div>
+      </div>
+    </div>
+
+    <!-- SCREEN: PROFILE -->
+    <div class="screen" id="profile">
+      <div class="back-row"><span onclick="showScreen('home')" style="cursor:pointer; font-size:18px;">←</span><h2>Business profile</h2></div>
+      <div class="content">
+        <div class="card" style="display:flex; align-items:center; gap:14px;">
+          <div class="avatar">ML</div>
+          <div>
+            <div style="font-weight:700; font-size:15px;">Meenakshi Tailoring</div>
+            <div style="font-size:12px; color:var(--ink-soft);">Owner: Lakshmi Devi</div>
+          </div>
+        </div>
+        <div class="field"><label>Business name</label><input type="text" value="Meenakshi Tailoring"></div>
+        <div class="field"><label>Owner name</label><input type="text" value="Lakshmi Devi"></div>
+        <div class="field"><label>Business type</label><input type="text" value="Tailoring & garments"></div>
+        <div class="field"><label>Location</label><input type="text" value="Tiruvottiyur, Tamil Nadu"></div>
+        <div class="field"><label>Phone number</label><input type="tel" value="+91 98765 43210"></div>
+        <div class="field"><label>Preferred language</label><input type="text" value="English"></div>
+        <button class="btn btn-primary" onclick="showScreen('home')">Save changes</button>
+
+        <h3 class="section-title">More</h3>
+        <div class="card-flat">
+          <div class="link-row" onclick="showScreen('history')"><div class="l"><span class="ico">📜</span>Transaction history</div><span class="chev">›</span></div>
+          <div class="link-row" onclick="showScreen('settings')"><div class="l"><span class="ico">⚙️</span>Settings</div><span class="chev">›</span></div>
+          <div class="link-row" onclick="showScreen('login')"><div class="l"><span class="ico">🚪</span>Log out</div><span class="chev">›</span></div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem" onclick="showScreen('home')"><div class="ico">🏠</div>Home</div>
+        <div class="navitem" onclick="showScreen('forecast')"><div class="ico">📈</div>Forecast</div>
+        <div class="navitem" onclick="showScreen('calendar')"><div class="ico">🗓️</div>Calendar</div>
+        <div class="navitem" onclick="showScreen('reports')"><div class="ico">📄</div>Reports</div>
+        <div class="navitem active" onclick="showScreen('profile')"><div class="ico">👤</div>Profile</div>
+      </div>
+    </div>
+
+    <!-- SCREEN: SETTINGS -->
+    <div class="screen" id="settings">
+      <div class="back-row"><span onclick="showScreen('profile')" style="cursor:pointer; font-size:18px;">←</span><h2>Settings</h2></div>
+      <div class="content">
+        <div class="card-flat">
+          <div class="switch-row"><span style="font-weight:600; font-size:13.5px;">Dark mode</span><div class="switch" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="switch-row"><span style="font-weight:600; font-size:13.5px;">Push notifications</span><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="switch-row"><span style="font-weight:600; font-size:13.5px;">Loan due reminders</span><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="switch-row"><span style="font-weight:600; font-size:13.5px;">Biometric security</span><div class="switch" onclick="this.classList.toggle('on')"><i></i></div></div>
+        </div>
+        <h3 class="section-title">Language</h3>
+        <div class="lang-row">
+          <div class="lang-chip sel" onclick="selLang(this)">English</div>
+          <div class="lang-chip" onclick="selLang(this)">தமிழ்</div>
+          <div class="lang-chip" onclick="selLang(this)">తెలుగు</div>
+          <div class="lang-chip" onclick="selLang(this)">हिन्दी</div>
+        </div>
+        <h3 class="section-title">Data</h3>
+        <div class="card-flat">
+          <div class="link-row"><div class="l"><span class="ico">☁️</span>Backup &amp; restore</div><span class="chev">›</span></div>
+          <div class="link-row"><div class="l"><span class="ico">🔒</span>Security settings</div><span class="chev">›</span></div>
+        </div>
+        <button class="btn btn-outline" style="margin-top:18px; color:var(--danger);" onclick="showScreen('login')">Log out</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('#'+id+' .navitem').forEach(()=>{});
+}
+function selLang(el){
+  el.parentElement.querySelectorAll('.lang-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function showOtp(){
+  document.getElementById('otpSection').style.display='block';
+}
+function setTxType(type){
+  const inc = document.getElementById('toggleIncome');
+  const exp = document.getElementById('toggleExpense');
+  if(!inc) return;
+  if(type==='in'){
+    inc.classList.add('on-income'); exp.classList.remove('on-expense');
+  } else {
+    exp.classList.add('on-expense'); inc.classList.remove('on-income');
+  }
+}
+document.querySelectorAll('#catRow .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#catRow .chip').forEach(x=>x.classList.remove('sel'));
+    c.classList.add('sel');
+  });
+});
+
+// build full 30-day calendar
+(function(){
+  const cal = document.getElementById('fullCal');
+  const pattern = ['g','g','g','a','g','g','r','g','g','a','g','g','g','r','a','g','g','g','a','g','g','g','a','a','g','g','g','g','r','a'];
+  // 3 leading empty cells to offset start day
+  for(let i=0;i<3;i++){ const e=document.createElement('div'); e.className='cal-day empty'; cal.appendChild(e); }
+  pattern.forEach((cls,i)=>{
+    const d=document.createElement('div');
+    d.className='cal-day '+cls;
+    d.textContent = i+1;
+    d.onclick=()=>{
+      document.querySelector('#dayDetail .label-eyebrow').textContent = 'Selected day — '+(i+1)+' Aug';
+    };
+    cal.appendChild(d);
+  });
+})();
+
+// auto-advance splash
+setTimeout(()=>{ showScreen('login'); }, 2200);
+</script>
+</body>
+</html>
